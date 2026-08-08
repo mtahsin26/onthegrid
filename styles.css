@@ -1,0 +1,256 @@
+:root {
+  --bg: #edf0f5;
+  --surface: #ffffff;
+  --ink: #1c2434;
+  --ink-soft: rgba(28, 36, 52, 0.18);
+  --muted: #66708a;
+  --gold: #d99a2b;
+  --danger: #c9403a;
+  --radius: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 14px 48px;
+}
+h1, h2, .btn, .timer {
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+}
+header {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; }
+.brand svg { display: block; }
+.timer {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+main { width: 100%; max-width: 560px; }
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+select, input[type="text"] {
+  font: inherit;
+  padding: 9px 12px;
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+}
+select:focus-visible, input:focus-visible, .btn:focus-visible, .cell:focus-visible {
+  outline: 2.5px solid var(--gold);
+  outline-offset: 1px;
+}
+.btn {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.12s ease;
+}
+.btn:hover { background: #f4f6fa; }
+.btn:active { transform: scale(0.97); }
+.btn.primary { background: var(--ink); color: #fff; }
+.btn.primary:hover { background: #2b3550; }
+.btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+
+.board-wrap { display: flex; justify-content: center; position: relative; }
+.board {
+  display: grid;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--ink);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  width: min(92vw, 520px);
+  aspect-ratio: 1;
+}
+/* The board is fully hidden, not just covered, so the puzzle
+   cannot be studied before the timer starts */
+.board-wrap.armed .board { visibility: hidden; }
+.board-gate {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: min(92vw, 520px);
+  margin: 0 auto;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  background: var(--surface);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 20px;
+}
+.board-wrap.armed .board-gate { display: flex; }
+.board-gate svg { width: 46px; height: 46px; }
+.board-gate .gate-size {
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+.board-gate .gate-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+  max-width: 260px;
+  margin-bottom: 10px;
+}
+.cell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  font-size: clamp(14px, 4.5vw, 26px);
+  border: 0 solid var(--ink);
+  cursor: pointer;
+}
+.cell .mark-x {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: rgba(28, 36, 52, 0.55);
+  font-weight: 600;
+  pointer-events: none;
+}
+.cell .mark-x.auto { color: rgba(28, 36, 52, 0.3); }
+.cell svg {
+  position: absolute;
+  left: 21%;
+  top: 21%;
+  width: 58%;
+  height: 58%;
+  pointer-events: none;
+}
+.cell.conflict::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(201, 64, 58, 0.22);
+  pointer-events: none;
+}
+.cell.conflict svg path { fill: var(--danger); }
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 14px 0 6px;
+}
+#status {
+  text-align: center;
+  min-height: 1.4em;
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin-bottom: 14px;
+}
+#status.error { color: var(--danger); }
+
+.panel {
+  background: var(--surface);
+  border: 1.5px solid var(--ink-soft);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-top: 14px;
+}
+.panel h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: 10px; }
+.save-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.save-row input[type="text"] { flex: 1; min-width: 140px; }
+input[type="file"] { display: none; }
+
+#savedList { list-style: none; }
+#savedList li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--ink-soft);
+  flex-wrap: wrap;
+}
+#savedList li:first-child { border-top: 0; }
+#savedList .pname { flex: 1; min-width: 120px; font-weight: 600; }
+#savedList .psize { color: var(--muted); font-size: 0.85rem; }
+#savedList .btn { padding: 5px 12px; font-size: 0.82rem; }
+.empty-note { color: var(--muted); font-size: 0.9rem; }
+
+#winBanner {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(28, 36, 52, 0.45);
+  padding: 20px;
+  z-index: 10;
+}
+#winBanner.show { display: flex; }
+.win-card {
+  position: relative;
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 28px 26px;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+}
+.win-card .crown-big svg { width: 64px; height: 64px; }
+.win-card h2 { font-size: 1.5rem; margin: 8px 0 4px; }
+.win-card p { color: var(--muted); margin-bottom: 16px; }
+.win-actions { display: flex; flex-direction: column; gap: 8px; }
+.win-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  line-height: 1;
+  font-size: 1.15rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink-soft);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+.win-close:hover { background: #f4f6fa; color: var(--ink); }
+.win-close:focus-visible { outline: 2.5px solid var(--gold); outline-offset: 1px; }
+.solved-note {
+  text-align: center;
+  font-weight: 600;
+  color: var(--ink);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .win-card { animation: pop 0.25s ease; }
+  @keyframes pop {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+}
