@@ -77,6 +77,36 @@ select:focus-visible, input:focus-visible, .btn:focus-visible, .cell:focus-visib
 .btn.primary:hover { background: #2b3550; }
 .btn:disabled { opacity: 0.45; cursor: default; transform: none; }
 
+.icon-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.icon-picker .icon-label { font-weight: 600; }
+.icon-choices { display: flex; gap: 6px; flex-wrap: wrap; }
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  padding: 4px;
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-btn svg { width: 100%; height: 100%; }
+.icon-btn:hover { background: #f4f6fa; }
+.icon-btn.selected {
+  border-color: var(--ink);
+  border-width: 2.5px;
+  background: #f4f6fa;
+}
+.icon-btn:focus-visible { outline: 2.5px solid var(--gold); outline-offset: 1px; }
+
 .board-wrap { display: flex; justify-content: center; position: relative; }
 .board {
   display: grid;

@@ -10,9 +10,21 @@ export const EMPTY = 0, MARK_X = 1, QUEEN = 2;
 export const MIN_REGION = 2;
 export const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
+// NYC-themed pastels: tinted so a dark icon on top stays readable.
+// Team/borough references in comments are the inspiration, not the exact hex.
 const PALETTE = [
-  "#bba3e4", "#a3c9f9", "#b5dfa5", "#e6e6e0", "#f2938c", "#e9f387",
-  "#f8c98f", "#c7b9a8", "#f5b5d0", "#9fe3d3", "#d3d97f", "#cbd3e1"
+  "#F7B731", // taxi yellow
+  "#B9D6E8", // MetroCard / Yankees sky
+  "#F5B8A5", // Knicks / Mets orange
+  "#B8E4D8", // Liberty seafoam
+  "#F0B6BC", // Rangers / Giants red
+  "#A9C8B0", // Jets green
+  "#C7B9A8", // brownstone
+  "#D6C3E0", // Empire violet
+  "#FFEEA0", // MTA yellow line
+  "#B4C1DB", // Mets / Yankees navy
+  "#F8C98F", // sunset orange
+  "#8FCB9B"  // parks green
 ];
 
 /* ============================================================

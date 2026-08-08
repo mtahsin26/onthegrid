@@ -27,13 +27,15 @@
     <button class="btn primary" id="genBtn">New puzzle</button>
   </div>
 
+  <div class="icon-picker">
+    <span class="icon-label">Your icon</span>
+    <div class="icon-choices" id="iconChoices"></div>
+  </div>
+
   <div class="board-wrap" id="boardWrap">
     <div id="board" class="board" aria-label="Puzzle board"></div>
     <div class="board-gate" id="boardGate">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="#d99a2b" stroke="#1c2434" stroke-width="1.2" stroke-linejoin="round"
-          d="M3 8l4 4 5-7 5 7 4-4-1.5 10h-15z"/>
-      </svg>
+      <div class="gate-icon" id="gateIcon"></div>
       <div class="gate-size" id="gateSize"></div>
       <p class="gate-note">The board stays hidden until you start. The timer begins with your first look.</p>
       <button class="btn primary" id="startBtn">Start puzzle</button>
@@ -68,12 +70,7 @@
 <div id="winBanner">
   <div class="win-card" role="dialog" aria-modal="true" aria-labelledby="winHeading">
     <button class="win-close" id="winCloseBtn" aria-label="Close and review the board">&times;</button>
-    <div class="crown-big">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="#d99a2b" stroke="#1c2434" stroke-width="1.2" stroke-linejoin="round"
-          d="M3 8l4 4 5-7 5 7 4-4-1.5 10h-15z"/>
-      </svg>
-    </div>
+    <div class="crown-big" id="winIcon"></div>
     <h2 id="winHeading">Solved!</h2>
     <p id="winTime"></p>
     <div class="win-actions">
