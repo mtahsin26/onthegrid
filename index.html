@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queens</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #edf0f5;
+    --surface: #ffffff;
+    --ink: #1c2434;
+    --ink-soft: rgba(28, 36, 52, 0.18);
+    --muted: #66708a;
+    --gold: #d99a2b;
+    --danger: #c9403a;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 14px 48px;
+  }
+  h1, h2, .btn, .timer {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  }
+  header {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; }
+  .brand svg { display: block; }
+  .timer {
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+  main { width: 100%; max-width: 560px; }
+
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  select, input[type="text"] {
+    font: inherit;
+    padding: 9px 12px;
+    border: 1.5px solid var(--ink-soft);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--ink);
+  }
+  select:focus-visible, input:focus-visible, .btn:focus-visible, .cell:focus-visible {
+    outline: 2.5px solid var(--gold);
+    outline-offset: 1px;
+  }
+  .btn {
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--ink);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.08s ease, background 0.12s ease;
+  }
+  .btn:hover { background: #f4f6fa; }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: var(--ink); color: #fff; }
+  .btn.primary:hover { background: #2b3550; }
+  .btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+
+  .board-wrap { display: flex; justify-content: center; position: relative; }
+  .board {
+    display: grid;
+    border: 3px solid var(--ink);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--ink);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    width: min(92vw, 520px);
+    aspect-ratio: 1;
+  }
+  /* The board is fully hidden, not just covered, so the puzzle
+     cannot be studied before the timer starts */
+  .board-wrap.armed .board { visibility: hidden; }
+  .board-gate {
+    display: none;
+    position: absolute;
+    inset: 0;
+    width: min(92vw, 520px);
+    margin: 0 auto;
+    border: 3px solid var(--ink);
+    border-radius: 8px;
+    background: var(--surface);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    padding: 20px;
+  }
+  .board-wrap.armed .board-gate { display: flex; }
+  .board-gate svg { width: 46px; height: 46px; }
+  .board-gate .gate-size {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+  }
+  .board-gate .gate-note {
+    color: var(--muted);
+    font-size: 0.9rem;
+    max-width: 260px;
+    margin-bottom: 10px;
+  }
+  .cell {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    font-size: clamp(14px, 4.5vw, 26px);
+    border: 0 solid var(--ink);
+    cursor: pointer;
+  }
+  .cell .mark-x {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    color: rgba(28, 36, 52, 0.55);
+    font-weight: 600;
+    pointer-events: none;
+  }
+  .cell .mark-x.auto { color: rgba(28, 36, 52, 0.3); }
+  .cell svg {
+    position: absolute;
+    left: 21%;
+    top: 21%;
+    width: 58%;
+    height: 58%;
+    pointer-events: none;
+  }
+  .cell.conflict::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(201, 64, 58, 0.22);
+    pointer-events: none;
+  }
+  .cell.conflict svg path { fill: var(--danger); }
+
+  .controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 14px 0 6px;
+  }
+  #status {
+    text-align: center;
+    min-height: 1.4em;
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin-bottom: 14px;
+  }
+  #status.error { color: var(--danger); }
+
+  .panel {
+    background: var(--surface);
+    border: 1.5px solid var(--ink-soft);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-top: 14px;
+  }
+  .panel h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: 10px; }
+  .save-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .save-row input[type="text"] { flex: 1; min-width: 140px; }
+  input[type="file"] { display: none; }
+
+  #savedList { list-style: none; }
+  #savedList li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-top: 1px solid var(--ink-soft);
+    flex-wrap: wrap;
+  }
+  #savedList li:first-child { border-top: 0; }
+  #savedList .pname { flex: 1; min-width: 120px; font-weight: 600; }
+  #savedList .psize { color: var(--muted); font-size: 0.85rem; }
+  #savedList .btn { padding: 5px 12px; font-size: 0.82rem; }
+  .empty-note { color: var(--muted); font-size: 0.9rem; }
+
+  #winBanner {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(28, 36, 52, 0.45);
+    padding: 20px;
+    z-index: 10;
+  }
+  #winBanner.show { display: flex; }
+  .win-card {
+    position: relative;
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 28px 26px;
+    text-align: center;
+    max-width: 320px;
+    width: 100%;
+  }
+  .win-card .crown-big svg { width: 64px; height: 64px; }
+  .win-card h2 { font-size: 1.5rem; margin: 8px 0 4px; }
+  .win-card p { color: var(--muted); margin-bottom: 16px; }
+  .win-actions { display: flex; flex-direction: column; gap: 8px; }
+  .win-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    line-height: 1;
+    font-size: 1.15rem;
+    border-radius: 999px;
+    border: 1.5px solid var(--ink-soft);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .win-close:hover { background: #f4f6fa; color: var(--ink); }
+  .win-close:focus-visible { outline: 2.5px solid var(--gold); outline-offset: 1px; }
+  .solved-note {
+    text-align: center;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .win-card { animation: pop 0.25s ease; }
+    @keyframes pop {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#d99a2b" stroke="#1c2434" stroke-width="1.2" stroke-linejoin="round"
+        d="M3 8l4 4 5-7 5 7 4-4-1.5 10h-15z"/>
+    </svg>
+    <h1>Queens</h1>
+  </div>
+  <div class="timer" id="timer">0:00</div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <label for="sizeSel" style="font-weight:600">Board</label>
+    <select id="sizeSel"></select>
+    <button class="btn primary" id="genBtn">New puzzle</button>
+  </div>
+
+  <div class="board-wrap" id="boardWrap">
+    <div id="board" class="board" aria-label="Puzzle board"></div>
+    <div class="board-gate" id="boardGate">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#d99a2b" stroke="#1c2434" stroke-width="1.2" stroke-linejoin="round"
+          d="M3 8l4 4 5-7 5 7 4-4-1.5 10h-15z"/>
+      </svg>
+      <div class="gate-size" id="gateSize"></div>
+      <p class="gate-note">The board stays hidden until you start. The timer begins with your first look.</p>
+      <button class="btn primary" id="startBtn">Start puzzle</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="undoBtn">Undo</button>
+    <button class="btn" id="hintBtn">Hint</button>
+    <button class="btn" id="clearBtn">Clear</button>
+  </div>
+  <div id="status" role="status"></div>
+
+  <section class="panel">
+    <h2>Save and load</h2>
+    <div class="save-row">
+      <input type="text" id="saveName" placeholder="Puzzle name">
+      <button class="btn" id="saveBtn">Save puzzle</button>
+      <label class="btn" for="importFile">Import JSON</label>
+      <input type="file" id="importFile" accept=".json,application/json">
+      <button class="btn" id="exportAllBtn">Export all</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Saved puzzles</h2>
+    <ul id="savedList"></ul>
+    <p class="empty-note" id="savedEmpty">Nothing saved yet. The list lives in this session, use Export or the per puzzle JSON button to keep files.</p>
+  </section>
+</main>
+
+<div id="winBanner">
+  <div class="win-card" role="dialog" aria-modal="true" aria-labelledby="winHeading">
+    <button class="win-close" id="winCloseBtn" aria-label="Close and review the board">&times;</button>
+    <div class="crown-big">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="#d99a2b" stroke="#1c2434" stroke-width="1.2" stroke-linejoin="round"
+          d="M3 8l4 4 5-7 5 7 4-4-1.5 10h-15z"/>
+      </svg>
+    </div>
+    <h2 id="winHeading">Solved!</h2>
+    <p id="winTime"></p>
+    <div class="win-actions">
+      <button class="btn primary" id="winNewBtn">New puzzle</button>
+      <button class="btn" id="winReviewBtn">Review board</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Constants and state
+   ============================================================ */
+
+const MIN_SIZE = 4, MAX_SIZE = 11;
+const EMPTY = 0, MARK_X = 1, QUEEN = 2;
+
+const PALETTE = [
+  "#bba3e4", "#a3c9f9", "#b5dfa5", "#e6e6e0", "#f2938c", "#e9f387",
+  "#f8c98f", "#c7b9a8", "#f5b5d0", "#9fe3d3", "#d3d97f", "#cbd3e1"
+];
+
+const CROWN_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#d99a2b" stroke="#1c2434" stroke-width="1.2" stroke-linejoin="round" d="M3 8l4 4 5-7 5 7 4-4-1.5 10h-15z"/></svg>';
+
+let puzzle = null;        // { size, regions, solution, colors, name }
+let marks = [];           // 2D array of EMPTY | MARK_X | QUEEN
+let undoStack = [];
+let savedPuzzles = [];    // in-memory list for this session
+let saveCounter = 0;
+let solved = false;
+let awaitingStart = false; // board built but hidden, timer not running
+
+let timerId = null, elapsed = 0;
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function grid2d(n, fill) {
+  return Array.from({ length: n }, () => Array(n).fill(fill));
+}
+
+function fmtTime(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m + ":" + String(s).padStart(2, "0");
+}
+
+/* ============================================================
+   Puzzle generation
+
+   1. Place n queens: one per row and column, no two touching,
+      not even diagonally. With one queen per row, only
+      consecutive rows can touch, so the placement is a
+      permutation p where abs(p[r] - p[r-1]) >= 2.
+   2. Grow color regions outward from each queen. Every region
+      gets a target size (never below MIN_REGION, so no lone
+      single cells) and a growth style: snaky regions extend
+      tendrils, blobby ones stay compact. This is what makes
+      the shapes intricate and varied.
+   3. Count solutions with a fast row-by-row solver.
+   4. If extra solutions exist, repair: reassign one cell used
+      by an alternate solution to a neighboring region. That
+      kills the alternate while the intended solution survives,
+      because the alternate now uses the neighbor region twice.
+      Repairs respect connectivity and the size floor.
+   ============================================================ */
+
+const MIN_REGION = 2;
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+
+function genPlacement(n) {
+  const cols = [...Array(n).keys()];
+  const p = [];
+  const used = new Set();
+  function bt(r) {
+    if (r === n) return true;
+    const cand = shuffle(cols.filter(c =>
+      !used.has(c) && (r === 0 || Math.abs(c - p[r - 1]) >= 2)));
+    for (const c of cand) {
+      p.push(c); used.add(c);
+      if (bt(r + 1)) return true;
+      p.pop(); used.delete(c);
+    }
+    return false;
+  }
+  return bt(0) ? p : null;
+}
+
+function genRegions(n, placement) {
+  const region = grid2d(n, -1);
+  const cells = [];
+  for (let r = 0; r < n; r++) {
+    region[r][placement[r]] = r;
+    cells.push([[r, placement[r]]]);
+  }
+
+  // Target sizes: a floor of MIN_REGION each, the rest spread
+  // with skewed weights so some regions run large and some small
+  const targets = new Array(n).fill(MIN_REGION);
+  let extra = n * n - n * MIN_REGION;
+  const w = Array.from({ length: n }, () => Math.pow(Math.random(), 1.6) + 0.05);
+  const wSum = w.reduce((a, b) => a + b, 0);
+  let given = 0;
+  for (let i = 0; i < n; i++) {
+    const add = Math.floor(extra * w[i] / wSum);
+    targets[i] += add;
+    given += add;
+  }
+  while (given < extra) { targets[Math.floor(Math.random() * n)]++; given++; }
+
+  // Growth style per region: snaky extends tendrils, blobby stays compact
+  const snaky = Array.from({ length: n }, () => Math.random() < 0.6);
+
+  function sameNbrs(r, c, id) {
+    let s = 0;
+    for (const [dr, dc] of DIRS) {
+      const rr = r + dr, cc = c + dc;
+      if (rr >= 0 && rr < n && cc >= 0 && cc < n && region[rr][cc] === id) s++;
+    }
+    return s;
+  }
+
+  function growOne(id) {
+    const frontier = [];
+    for (const [r, c] of cells[id]) {
+      for (const [dr, dc] of DIRS) {
+        const rr = r + dr, cc = c + dc;
+        if (rr >= 0 && rr < n && cc >= 0 && cc < n && region[rr][cc] === -1)
+          frontier.push([rr, cc]);
+      }
+    }
+    if (!frontier.length) return false;
+    shuffle(frontier);
+    let pick = frontier[0];
+    if (frontier.length > 1) {
+      // snaky picks the cell touching the region least, blobby the most
+      let best = frontier[0], bestS = sameNbrs(frontier[0][0], frontier[0][1], id);
+      for (let i = 1; i < frontier.length; i++) {
+        const s = sameNbrs(frontier[i][0], frontier[i][1], id);
+        if (snaky[id] ? s < bestS : s > bestS) { best = frontier[i]; bestS = s; }
+      }
+      pick = best;
+    }
+    region[pick[0]][pick[1]] = id;
+    cells[id].push(pick);
+    return true;
+  }
+
+  let unassigned = n * n - n;
+  while (unassigned > 0) {
+    // regions below the size floor grow first so nothing gets
+    // walled off at one cell, then regions still under target
+    let under = [];
+    for (let id = 0; id < n; id++)
+      if (cells[id].length < MIN_REGION) under.push(id);
+    if (!under.length)
+      for (let id = 0; id < n; id++)
+        if (cells[id].length < targets[id]) under.push(id);
+
+    let grown = false;
+    if (under.length) {
+      const pool = under.slice();
+      while (pool.length && !grown) {
+        // weighted by remaining need so big targets keep pace
+        let total = 0;
+        for (const id of pool) total += targets[id] - cells[id].length;
+        let pick = Math.random() * total, chosen = pool[0];
+        for (const id of pool) {
+          pick -= targets[id] - cells[id].length;
+          if (pick <= 0) { chosen = id; break; }
+        }
+        if (growOne(chosen)) grown = true;
+        else pool.splice(pool.indexOf(chosen), 1);
+      }
+    }
+    if (!grown) {
+      // overflow: walled-off cells go to whichever neighbor can take them
+      for (const id of shuffle([...Array(n).keys()])) {
+        if (growOne(id)) { grown = true; break; }
+      }
+    }
+    if (!grown) return null;
+    unassigned--;
+  }
+
+  // reject any layout that still ended up with a region under the floor
+  const sizes = new Array(n).fill(0);
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++) sizes[region[r][c]]++;
+  if (Math.min(...sizes) < MIN_REGION) return null;
+  return region;
+}
+
+function countSolutions(regions, n, limit) {
+  let count = 0;
+  const usedCol = new Array(n).fill(false);
+  const usedReg = new Array(n).fill(false);
+  const colAt = new Array(n).fill(-1);
+  const solutions = [];
+
+  function bt(r) {
+    if (count >= limit) return;
+    if (r === n) {
+      count++;
+      solutions.push(colAt.slice());
+      return;
+    }
+    for (let c = 0; c < n; c++) {
+      if (usedCol[c]) continue;
+      const id = regions[r][c];
+      if (usedReg[id]) continue;
+      // Only the previous row can produce a diagonal or side touch
+      if (r > 0 && Math.abs(colAt[r - 1] - c) <= 1) continue;
+      usedCol[c] = true; usedReg[id] = true; colAt[r] = c;
+      bt(r + 1);
+      usedCol[c] = false; usedReg[id] = false; colAt[r] = -1;
+    }
+  }
+  bt(0);
+  return { count, firstSolution: solutions[0] || null, solutions };
+}
+
+function pickColors(n) {
+  const colors = shuffle(PALETTE.slice());
+  while (colors.length < n) {
+    const h = Math.floor(Math.random() * 360);
+    colors.push("hsl(" + h + ", 65%, 82%)");
+  }
+  return colors.slice(0, n);
+}
+
+function stillConnected(region, n, g) {
+  let start = null, count = 0;
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++)
+      if (region[r][c] === g) { count++; if (!start) start = [r, c]; }
+  if (!count) return false;
+  const seen = new Set([start[0] + "," + start[1]]);
+  const stack = [start];
+  while (stack.length) {
+    const [r, c] = stack.pop();
+    for (const [dr, dc] of DIRS) {
+      const rr = r + dr, cc = c + dc, k = rr + "," + cc;
+      if (rr >= 0 && rr < n && cc >= 0 && cc < n &&
+          region[rr][cc] === g && !seen.has(k)) {
+        seen.add(k);
+        stack.push([rr, cc]);
+      }
+    }
+  }
+  return seen.size === count;
+}
+
+function makeUnique(region, n, placement, maxIters) {
+  const sizeOf = id => {
+    let s = 0;
+    for (let r = 0; r < n; r++)
+      for (let c = 0; c < n; c++)
+        if (region[r][c] === id) s++;
+    return s;
+  };
+  for (let it = 0; it < maxIters; it++) {
+    const res = countSolutions(region, n, 2);
+    if (res.count === 1) return true;
+    if (res.count === 0) return false;
+    const alt = res.solutions.find(s => !s.every((c, r) => c === placement[r]));
+    if (!alt) return false;
+    const rows = shuffle([...Array(n).keys()].filter(r => alt[r] !== placement[r]));
+    let done = false;
+    for (const r of rows) {
+      const c = alt[r], g = region[r][c];
+      if (sizeOf(g) <= MIN_REGION) continue; // never shrink below the floor
+      const neigh = new Set();
+      for (const [dr, dc] of DIRS) {
+        const rr = r + dr, cc = c + dc;
+        if (rr >= 0 && rr < n && cc >= 0 && cc < n && region[rr][cc] !== g)
+          neigh.add(region[rr][cc]);
+      }
+      for (const g2 of shuffle([...neigh])) {
+        region[r][c] = g2;
+        if (stillConnected(region, n, g)) { done = true; break; }
+        region[r][c] = g;
+      }
+      if (done) break;
+    }
+    if (!done) return false;
+  }
+  return countSolutions(region, n, 2).count === 1;
+}
+
+function generatePuzzle(n) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < 9000) {
+    const placement = genPlacement(n);
+    if (!placement) continue;
+    for (let t = 0; t < 8 && Date.now() - t0 < 9000; t++) {
+      const regions = genRegions(n, placement);
+      if (!regions) continue;
+      if (makeUnique(regions, n, placement, n * 8)) {
+        return {
+          size: n,
+          regions,
+          solution: placement,
+          colors: pickColors(n),
+          name: ""
+        };
+      }
+    }
+  }
+  return null;
+}
+
+/* ============================================================
+   Board rendering
+   ============================================================ */
+
+const boardEl = document.getElementById("board");
+
+function buildBoard() {
+  const n = puzzle.size;
+  boardEl.innerHTML = "";
+  boardEl.style.gridTemplateColumns = "repeat(" + n + ", minmax(0, 1fr))";
+  boardEl.style.gridTemplateRows = "repeat(" + n + ", minmax(0, 1fr))";
+  const thin = "1px solid rgba(28,36,52,0.22)";
+  const thick = "2px solid #1c2434";
+
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      cell.tabIndex = 0;
+      cell.setAttribute("role", "button");
+      cell.style.background = puzzle.colors[puzzle.regions[r][c]];
+      // Draw only top and left edges per cell, the frame covers the rest
+      cell.style.borderTop = r === 0 ? "0"
+        : (puzzle.regions[r][c] !== puzzle.regions[r - 1][c] ? thick : thin);
+      cell.style.borderLeft = c === 0 ? "0"
+        : (puzzle.regions[r][c] !== puzzle.regions[r][c - 1] ? thick : thin);
+      boardEl.appendChild(cell);
+    }
+  }
+  renderMarks();
+}
+
+function cellEl(r, c) {
+  return boardEl.children[r * puzzle.size + c];
+}
+
+/* Auto X layer: every queen covers its row, its column, and the
+   ring of cells around it. Coverage is recomputed from the queens
+   on every render, so removing a queen removes exactly its Xs
+   while Xs still justified by another queen stay put. */
+function computeCoverage() {
+  const n = puzzle.size;
+  const cov = grid2d(n, false);
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (marks[r][c] !== QUEEN) continue;
+      for (let i = 0; i < n; i++) { cov[r][i] = true; cov[i][c] = true; }
+      for (let dr = -1; dr <= 1; dr++)
+        for (let dc = -1; dc <= 1; dc++) {
+          const rr = r + dr, cc = c + dc;
+          if (rr >= 0 && rr < n && cc >= 0 && cc < n) cov[rr][cc] = true;
+        }
+    }
+  }
+  return cov;
+}
+
+/* What a cell shows: manual queen, then manual X, then auto X. */
+function displayState(r, c, cov) {
+  if (marks[r][c] === QUEEN) return QUEEN;
+  if (marks[r][c] === MARK_X) return MARK_X;
+  return cov[r][c] ? MARK_X : EMPTY;
+}
+
+function renderMarks() {
+  const n = puzzle.size;
+  const conflicts = computeConflicts();
+  const cov = computeCoverage();
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const el = cellEl(r, c);
+      const d = displayState(r, c, cov);
+      el.innerHTML = d === MARK_X
+        ? '<span class="mark-x' + (marks[r][c] === MARK_X ? '' : ' auto') + '">&times;</span>'
+        : d === QUEEN ? CROWN_SVG : "";
+      el.classList.toggle("conflict", conflicts.has(r + "," + c));
+      el.setAttribute("aria-label",
+        "Row " + (r + 1) + " column " + (c + 1) + ", " +
+        (d === QUEEN ? "queen" : d === MARK_X ? "marked" : "empty"));
+    }
+  }
+  updateButtons();
+}
+
+/* ============================================================
+   Rule checking
+   ============================================================ */
+
+function computeConflicts() {
+  const n = puzzle.size;
+  const bad = new Set();
+  const queens = [];
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++)
+      if (marks[r][c] === QUEEN) queens.push([r, c]);
+
+  for (let i = 0; i < queens.length; i++) {
+    for (let j = i + 1; j < queens.length; j++) {
+      const r1 = queens[i][0], c1 = queens[i][1];
+      const r2 = queens[j][0], c2 = queens[j][1];
+      const sameRegion = puzzle.regions[r1][c1] === puzzle.regions[r2][c2];
+      const touching = Math.abs(r1 - r2) <= 1 && Math.abs(c1 - c2) <= 1;
+      if (r1 === r2 || c1 === c2 || sameRegion || touching) {
+        bad.add(r1 + "," + c1);
+        bad.add(r2 + "," + c2);
+      }
+    }
+  }
+  return bad;
+}
+
+function checkSolved() {
+  const n = puzzle.size;
+  let queenCount = 0;
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++)
+      if (marks[r][c] === QUEEN) queenCount++;
+  if (queenCount !== n) return;
+  if (computeConflicts().size > 0) return;
+  onWin();
+}
+
+function onWin() {
+  solved = true;
+  stopTimer();
+  document.getElementById("winTime").textContent =
+    "Finished in " + fmtTime(elapsed);
+  document.getElementById("winBanner").classList.add("show");
+  updateButtons();
+  document.getElementById("winCloseBtn").focus();
+}
+
+/* Dismiss the win card so the finished board is visible.
+   The time stays on screen in the status line and the timer
+   stays stopped, so nothing is lost by closing. */
+function dismissWin() {
+  document.getElementById("winBanner").classList.remove("show");
+  setStatus("Solved in " + fmtTime(elapsed) + ". Pick a size and press New puzzle when you are ready.");
+  statusEl.classList.add("solved-note");
+}
+
+document.getElementById("winCloseBtn").addEventListener("click", dismissWin);
+document.getElementById("winReviewBtn").addEventListener("click", dismissWin);
+
+// Click the dimmed area or press Escape to close as well
+document.getElementById("winBanner").addEventListener("pointerdown", e => {
+  if (e.target.id === "winBanner") dismissWin();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" &&
+      document.getElementById("winBanner").classList.contains("show")) {
+    dismissWin();
+  }
+});
+
+/* ============================================================
+   Interaction: a tap cycles empty, X, queen, back to empty.
+   Press and drag along a row or a column paints Xs on empty
+   cells. The axis locks to the first direction of movement.
+   ============================================================ */
+
+let pointer = null; // { startR, startC, axis, moved, snapshot }
+
+boardEl.addEventListener("pointerdown", e => {
+  if (solved || awaitingStart || !puzzle) return;
+  const cell = e.target.closest(".cell");
+  if (!cell) return;
+  e.preventDefault();
+  pointer = {
+    startR: +cell.dataset.r,
+    startC: +cell.dataset.c,
+    axis: null,
+    moved: false,
+    snapshot: marks.map(row => row.slice())
+  };
+});
+
+boardEl.addEventListener("pointermove", e => {
+  if (!pointer || solved) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const cell = el && el.closest ? el.closest(".cell") : null;
+  if (!cell || !boardEl.contains(cell)) return;
+  const r = +cell.dataset.r, c = +cell.dataset.c;
+  if (r === pointer.startR && c === pointer.startC && !pointer.moved) return;
+
+  // Coverage is stable during a drag, no queens change mid-drag
+  const cov = computeCoverage();
+
+  if (!pointer.axis) {
+    if (r === pointer.startR && c !== pointer.startC) pointer.axis = "h";
+    else if (c === pointer.startC && r !== pointer.startR) pointer.axis = "v";
+    else return;
+    pointer.moved = true;
+    paintX(pointer.startR, pointer.startC, cov);
+  }
+
+  if (pointer.axis === "h" && r === pointer.startR) {
+    const lo = Math.min(pointer.startC, c), hi = Math.max(pointer.startC, c);
+    for (let cc = lo; cc <= hi; cc++) paintX(pointer.startR, cc, cov);
+  } else if (pointer.axis === "v" && c === pointer.startC) {
+    const lo = Math.min(pointer.startR, r), hi = Math.max(pointer.startR, r);
+    for (let rr = lo; rr <= hi; rr++) paintX(rr, pointer.startC, cov);
+  }
+  renderMarks();
+});
+
+function endPointer(e) {
+  if (!pointer || !puzzle) return;
+  const p = pointer;
+  pointer = null;
+  if (solved) return;
+
+  if (!p.moved && e.type === "pointerup") {
+    // Plain tap: cycle the cell state
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = el && el.closest ? el.closest(".cell") : null;
+    if (cell && +cell.dataset.r === p.startR && +cell.dataset.c === p.startC) {
+      undoStack.push(p.snapshot);
+      trimUndo();
+      cycleCell(p.startR, p.startC);
+      return;
+    }
+  }
+  if (p.moved) {
+    undoStack.push(p.snapshot);
+    trimUndo();
+    updateButtons();
+    checkSolved();
+  }
+}
+boardEl.addEventListener("pointerup", endPointer);
+boardEl.addEventListener("pointercancel", endPointer);
+
+function paintX(r, c, cov) {
+  // Only paint truly empty cells, auto Xs stay owned by their queen
+  if (marks[r][c] === EMPTY && !cov[r][c]) marks[r][c] = MARK_X;
+}
+
+/* Cycle by what the cell shows: empty to X, any X to queen,
+   queen back to empty. Removing the queen drops its auto Xs. */
+function cycleCell(r, c) {
+  const d = displayState(r, c, computeCoverage());
+  if (d === EMPTY) marks[r][c] = MARK_X;
+  else if (d === MARK_X) marks[r][c] = QUEEN;
+  else marks[r][c] = EMPTY;
+  renderMarks();
+  checkSolved();
+}
+
+// Keyboard access: Enter or Space cycles the focused cell
+boardEl.addEventListener("keydown", e => {
+  if (solved || awaitingStart) return;
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const cell = e.target.closest(".cell");
+  if (!cell) return;
+  e.preventDefault();
+  undoStack.push(marks.map(row => row.slice()));
+  trimUndo();
+  cycleCell(+cell.dataset.r, +cell.dataset.c);
+});
+
+function trimUndo() {
+  if (undoStack.length > 300) undoStack.shift();
+}
+
+/* ============================================================
+   Controls
+   ============================================================ */
+
+const statusEl = document.getElementById("status");
+
+function setStatus(msg, isError) {
+  statusEl.textContent = msg || "";
+  statusEl.classList.toggle("error", !!isError);
+  statusEl.classList.remove("solved-note");
+}
+
+document.getElementById("undoBtn").addEventListener("click", () => {
+  if (!undoStack.length || solved || awaitingStart) return;
+  marks = undoStack.pop();
+  renderMarks();
+});
+
+document.getElementById("clearBtn").addEventListener("click", () => {
+  if (!puzzle || solved || awaitingStart) return;
+  undoStack.push(marks.map(row => row.slice()));
+  trimUndo();
+  marks = grid2d(puzzle.size, EMPTY);
+  renderMarks();
+  setStatus("");
+});
+
+document.getElementById("hintBtn").addEventListener("click", () => {
+  if (!puzzle || solved || awaitingStart) return;
+  const n = puzzle.size;
+  for (let r = 0; r < n; r++) {
+    const c = puzzle.solution[r];
+    if (marks[r][c] !== QUEEN) {
+      undoStack.push(marks.map(row => row.slice()));
+      trimUndo();
+      // Clear any queen already in this row, then reveal the right one
+      for (let cc = 0; cc < n; cc++)
+        if (marks[r][cc] === QUEEN) marks[r][cc] = EMPTY;
+      marks[r][c] = QUEEN;
+      renderMarks();
+      checkSolved();
+      return;
+    }
+  }
+});
+
+function updateButtons() {
+  const idle = !puzzle || solved || awaitingStart;
+  document.getElementById("undoBtn").disabled = !undoStack.length || idle;
+  document.getElementById("hintBtn").disabled = idle;
+  document.getElementById("clearBtn").disabled = idle;
+}
+
+/* ============================================================
+   Timer
+   ============================================================ */
+
+function startTimer() {
+  stopTimer();
+  elapsed = 0;
+  document.getElementById("timer").textContent = "0:00";
+  timerId = setInterval(() => {
+    elapsed++;
+    document.getElementById("timer").textContent = fmtTime(elapsed);
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerId) clearInterval(timerId);
+  timerId = null;
+}
+
+/* ============================================================
+   New puzzle
+   ============================================================ */
+
+function startPuzzle(p) {
+  puzzle = p;
+  marks = grid2d(p.size, EMPTY);
+  undoStack = [];
+  solved = false;
+  document.getElementById("winBanner").classList.remove("show");
+  buildBoard();
+  armGate();
+  setStatus("");
+  document.getElementById("saveName").value = p.name || "";
+}
+
+/* Hide the board and hold the timer at zero until Start is pressed */
+function armGate() {
+  awaitingStart = true;
+  stopTimer();
+  elapsed = 0;
+  document.getElementById("timer").textContent = "0:00";
+  document.getElementById("gateSize").textContent =
+    puzzle.size + " x " + puzzle.size + " ready";
+  document.getElementById("boardWrap").classList.add("armed");
+  updateButtons();
+  document.getElementById("startBtn").focus();
+}
+
+function beginPlay() {
+  if (!puzzle || !awaitingStart) return;
+  awaitingStart = false;
+  document.getElementById("boardWrap").classList.remove("armed");
+  startTimer();
+  updateButtons();
+}
+
+document.getElementById("startBtn").addEventListener("click", beginPlay);
+
+function newPuzzle() {
+  const n = +document.getElementById("sizeSel").value;
+  setStatus("Generating...");
+  // Let the status paint before the synchronous search runs
+  setTimeout(() => {
+    const p = generatePuzzle(n);
+    if (!p) { setStatus("Could not generate a puzzle, try again.", true); return; }
+    startPuzzle(p);
+  }, 20);
+}
+
+document.getElementById("genBtn").addEventListener("click", newPuzzle);
+document.getElementById("winNewBtn").addEventListener("click", newPuzzle);
+
+/* ============================================================
+   Save, export, import
+   ============================================================ */
+
+function puzzleToJSON(p) {
+  return {
+    format: "queens-puzzle",
+    version: 1,
+    name: p.name,
+    size: p.size,
+    regions: p.regions,
+    solution: p.solution
+  };
+}
+
+function downloadJSON(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)],
+    { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById("saveBtn").addEventListener("click", () => {
+  if (!puzzle) return;
+  saveCounter++;
+  const name = document.getElementById("saveName").value.trim()
+    || puzzle.size + "x" + puzzle.size + " #" + saveCounter;
+  puzzle.name = name;
+  const copy = clonePuzzle(puzzle);
+  savedPuzzles.push(copy);
+  renderSavedList();
+  downloadJSON(puzzleToJSON(copy), name.replace(/[^\w\-]+/g, "_") + ".json");
+  setStatus('Saved "' + name + '" and downloaded its JSON file.');
+});
+
+document.getElementById("exportAllBtn").addEventListener("click", () => {
+  if (!savedPuzzles.length) { setStatus("No saved puzzles to export.", true); return; }
+  downloadJSON(savedPuzzles.map(puzzleToJSON), "queens_puzzles.json");
+});
+
+document.getElementById("importFile").addEventListener("change", e => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const items = Array.isArray(data) ? data : [data];
+      let loaded = 0, last = null;
+      for (const item of items) {
+        const p = validateImport(item);
+        if (p) { savedPuzzles.push(p); last = p; loaded++; }
+      }
+      renderSavedList();
+      if (!loaded) { setStatus("No valid puzzles found in that file.", true); return; }
+      setStatus("Imported " + loaded + " puzzle" + (loaded > 1 ? "s" : "") + ".");
+      if (last) startPuzzle(clonePuzzle(last));
+    } catch (err) {
+      setStatus("Could not read that file as JSON.", true);
+    }
+  };
+  reader.readAsText(file);
+});
+
+function validateImport(item) {
+  if (!item || typeof item !== "object") return null;
+  const n = item.size;
+  if (!Number.isInteger(n) || n < MIN_SIZE || n > 14) return null;
+  const reg = item.regions;
+  if (!Array.isArray(reg) || reg.length !== n) return null;
+  for (const row of reg) {
+    if (!Array.isArray(row) || row.length !== n) return null;
+    for (const v of row)
+      if (!Number.isInteger(v) || v < 0 || v >= n) return null;
+  }
+  const regions = reg.map(r => r.slice());
+  // Recompute the solution from the regions so hand-made files work too
+  const res = countSolutions(regions, n, 2);
+  if (res.count === 0) return null;
+  return {
+    size: n,
+    regions,
+    solution: res.firstSolution,
+    colors: pickColors(n),
+    name: typeof item.name === "string" && item.name ? item.name : n + "x" + n + " imported"
+  };
+}
+
+function clonePuzzle(p) {
+  return {
+    size: p.size,
+    regions: p.regions.map(r => r.slice()),
+    solution: p.solution.slice(),
+    colors: p.colors.slice(),
+    name: p.name
+  };
+}
+
+function renderSavedList() {
+  const list = document.getElementById("savedList");
+  document.getElementById("savedEmpty").style.display =
+    savedPuzzles.length ? "none" : "block";
+  list.innerHTML = "";
+  savedPuzzles.forEach((p, i) => {
+    const li = document.createElement("li");
+    const name = document.createElement("span");
+    name.className = "pname";
+    name.textContent = p.name;
+    const size = document.createElement("span");
+    size.className = "psize";
+    size.textContent = p.size + "x" + p.size;
+    const loadBtn = document.createElement("button");
+    loadBtn.className = "btn";
+    loadBtn.textContent = "Play";
+    loadBtn.addEventListener("click", () => startPuzzle(clonePuzzle(p)));
+    const dlBtn = document.createElement("button");
+    dlBtn.className = "btn";
+    dlBtn.textContent = "JSON";
+    dlBtn.addEventListener("click", () =>
+      downloadJSON(puzzleToJSON(p), p.name.replace(/[^\w\-]+/g, "_") + ".json"));
+    const rmBtn = document.createElement("button");
+    rmBtn.className = "btn";
+    rmBtn.textContent = "Remove";
+    rmBtn.addEventListener("click", () => {
+      savedPuzzles.splice(i, 1);
+      renderSavedList();
+    });
+    li.append(name, size, loadBtn, dlBtn, rmBtn);
+    list.appendChild(li);
+  });
+}
+
+/* ============================================================
+   Init
+   ============================================================ */
+
+(function init() {
+  const sel = document.getElementById("sizeSel");
+  for (let n = MIN_SIZE; n <= MAX_SIZE; n++) {
+    const opt = document.createElement("option");
+    opt.value = n;
+    opt.textContent = n + " x " + n;
+    if (n === 7) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  renderSavedList();
+  newPuzzle();
+})();
+</script>
+</body>
+</html>
