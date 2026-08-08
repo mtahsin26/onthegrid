@@ -16,26 +16,33 @@ import {
 // cell slot without extra scaling logic.
 const ICONS = {
   brooklyn: {
-    name: "Brooklyn — Crown",
+    borough: "Brooklyn",
+    nickname: "Kings County",
     svg: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#d99a2b" stroke="#1c2434" stroke-width="1.2" stroke-linejoin="round" d="M3 8l4 4 5-7 5 7 4-4-1.5 10h-15z"/></svg>'
   },
   queens: {
-    name: "Queens — Unisphere",
+    borough: "Queens",
+    nickname: "The World's Borough",
     svg: '<svg viewBox="0 0 24 24" aria-hidden="true"><g stroke="#1c2434" stroke-width="1.1" stroke-linecap="round" fill="none"><circle cx="12" cy="11" r="6.5" fill="#a3c9f9"/><ellipse cx="12" cy="11" rx="6.5" ry="2.5"/><ellipse cx="12" cy="11" rx="2.5" ry="6.5"/><line x1="5.5" y1="11" x2="18.5" y2="11"/><path d="M12 18v3M9 21h6"/></g></svg>'
   },
   manhattan: {
-    name: "Manhattan — Empire State",
+    borough: "Manhattan",
+    nickname: "Empire State of Mind",
     svg: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="#c7b9a8" stroke="#1c2434" stroke-width="0.9" stroke-linejoin="round"><path d="M11.7 2h0.6v3h-0.6z"/><path d="M10.5 5h3v3h-3z"/><path d="M9 8h6v4H9z"/><path d="M7 12h10v10H7z"/><path d="M9 14h1v2H9zM11 14h1v2h-1zM13 14h1v2h-1zM14 14h1v2h-1z" fill="#1c2434" stroke="none"/></g></svg>'
   },
   bronx: {
-    name: "Bronx — Boombox",
+    borough: "Bronx",
+    nickname: "The Boogie Down",
     svg: '<svg viewBox="0 0 24 24" aria-hidden="true"><g stroke="#1c2434" stroke-width="1" stroke-linejoin="round"><path fill="none" d="M8 6.5c0-1 1-2 2-2h4c1 0 2 1 2 2"/><rect x="3.5" y="6.5" width="17" height="13" rx="1.5" fill="#8892a6"/><circle cx="8" cy="13" r="2.8" fill="#1c2434"/><circle cx="16" cy="13" r="2.8" fill="#1c2434"/><rect x="10.5" y="8" width="3" height="1.5" fill="#e6e6e0"/></g></svg>'
   },
   statenisland: {
-    name: "Staten Island — Wu-Tang",
-    svg: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#FFD200" stroke="#1c2434" stroke-width="1" stroke-linejoin="round" d="M2 4l3.5 17 4-9 2.5 6 2.5-6 4 9L22 4l-4.5 3-3 6-2.5-4-2.5 4-3-6z"/></svg>'
+    borough: "Staten Island",
+    nickname: "The Shaolin",
+    svg: '<img src="wutangicon.png" alt="" draggable="false">'
   }
 };
+
+const iconLabel = key => ICONS[key].borough + " - " + ICONS[key].nickname;
 
 let currentIcon = "brooklyn"; // default matches original crown
 
@@ -503,6 +510,7 @@ function renderSavedList() {
 function applyIcon() {
   document.getElementById("winIcon").innerHTML = ICONS[currentIcon].svg;
   document.getElementById("gateIcon").innerHTML = ICONS[currentIcon].svg;
+  document.getElementById("iconSelected").textContent = iconLabel(currentIcon);
   document.querySelectorAll(".icon-btn").forEach(b => {
     const sel = b.dataset.icon === currentIcon;
     b.classList.toggle("selected", sel);
@@ -518,8 +526,8 @@ function buildIconPicker() {
     btn.type = "button";
     btn.className = "icon-btn";
     btn.dataset.icon = key;
-    btn.title = icon.name;
-    btn.setAttribute("aria-label", icon.name);
+    btn.title = iconLabel(key);
+    btn.setAttribute("aria-label", iconLabel(key));
     btn.innerHTML = icon.svg;
     btn.addEventListener("click", () => { currentIcon = key; applyIcon(); });
     host.appendChild(btn);

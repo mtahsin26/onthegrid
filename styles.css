@@ -11,7 +11,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; }
 body {
-  background: var(--bg);
+  /* Faded sign as a fixed backdrop; 90% opaque bg tint sits on top
+     so text stays readable while the NYC image bleeds through. */
+  background:
+    linear-gradient(rgba(237, 240, 245, 0.90), rgba(237, 240, 245, 0.90)) fixed,
+    url("otgimage.jpg") center/contain no-repeat fixed var(--bg);
   color: var(--ink);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   display: flex;
@@ -32,7 +36,11 @@ header {
 }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; }
-.brand svg { display: block; }
+.brand-img {
+  display: block;
+  height: 48px;
+  width: auto;
+}
 .timer {
   font-size: 1.25rem;
   font-weight: 600;
@@ -85,6 +93,18 @@ select:focus-visible, input:focus-visible, .btn:focus-visible, .cell:focus-visib
   flex-wrap: wrap;
 }
 .icon-picker .icon-label { font-weight: 600; }
+.icon-panel {
+  background: transparent;
+  border: 0;
+  margin-top: 4px;
+  padding: 6px 0 10px;
+  text-align: center;
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
 .icon-choices { display: flex; gap: 6px; flex-wrap: wrap; }
 .icon-btn {
   width: 42px;
@@ -98,7 +118,7 @@ select:focus-visible, input:focus-visible, .btn:focus-visible, .cell:focus-visib
   align-items: center;
   justify-content: center;
 }
-.icon-btn svg { width: 100%; height: 100%; }
+.icon-btn svg, .icon-btn img { width: 100%; height: 100%; object-fit: contain; }
 .icon-btn:hover { background: #f4f6fa; }
 .icon-btn.selected {
   border-color: var(--ink);
@@ -117,7 +137,7 @@ select:focus-visible, input:focus-visible, .btn:focus-visible, .cell:focus-visib
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  width: min(92vw, 520px);
+  width: 100%;
   aspect-ratio: 1;
 }
 /* The board is fully hidden, not just covered, so the puzzle
@@ -127,8 +147,6 @@ select:focus-visible, input:focus-visible, .btn:focus-visible, .cell:focus-visib
   display: none;
   position: absolute;
   inset: 0;
-  width: min(92vw, 520px);
-  margin: 0 auto;
   border: 3px solid var(--ink);
   border-radius: 8px;
   background: var(--surface);
@@ -140,7 +158,7 @@ select:focus-visible, input:focus-visible, .btn:focus-visible, .cell:focus-visib
   padding: 20px;
 }
 .board-wrap.armed .board-gate { display: flex; }
-.board-gate svg { width: 46px; height: 46px; }
+.board-gate svg, .board-gate img { width: 46px; height: 46px; object-fit: contain; }
 .board-gate .gate-size {
   font-family: "Bricolage Grotesque", system-ui, sans-serif;
   font-size: 1.35rem;
@@ -172,13 +190,14 @@ select:focus-visible, input:focus-visible, .btn:focus-visible, .cell:focus-visib
   pointer-events: none;
 }
 .cell .mark-x.auto { color: rgba(28, 36, 52, 0.3); }
-.cell svg {
+.cell svg, .cell img {
   position: absolute;
   left: 21%;
   top: 21%;
   width: 58%;
   height: 58%;
   pointer-events: none;
+  object-fit: contain;
 }
 .cell.conflict::after {
   content: "";
@@ -251,7 +270,7 @@ input[type="file"] { display: none; }
   max-width: 320px;
   width: 100%;
 }
-.win-card .crown-big svg { width: 64px; height: 64px; }
+.win-card .crown-big svg, .win-card .crown-big img { width: 64px; height: 64px; object-fit: contain; }
 .win-card h2 { font-size: 1.5rem; margin: 8px 0 4px; }
 .win-card p { color: var(--muted); margin-bottom: 16px; }
 .win-actions { display: flex; flex-direction: column; gap: 8px; }
